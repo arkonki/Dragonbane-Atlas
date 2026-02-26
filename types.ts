@@ -2,8 +2,8 @@ export interface MapData {
   id: string;
   name: string;
   url: string;
-  file: File;
   createdAt: number;
+  isFavorite?: boolean;
   width?: number;
   height?: number;
 }
