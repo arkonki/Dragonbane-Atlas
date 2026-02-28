@@ -69,9 +69,11 @@ export const MapViewer: React.FC<MapViewerProps> = ({ map, onClose }) => {
   const [selectedTorchId, setSelectedTorchId] = useState<string | null>(null);
   const [draggingTorchId, setDraggingTorchId] = useState<string | null>(null);
   const [showFogPanel, setShowFogPanel] = useState(false);
+  const [isWeatherMenuOpen, setIsWeatherMenuOpen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
+  const weatherMenuRef = useRef<HTMLDivElement>(null);
   const fowCanvasRef = useRef<HTMLCanvasElement>(null);
   const torchCanvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -505,7 +507,19 @@ export const MapViewer: React.FC<MapViewerProps> = ({ map, onClose }) => {
   useEffect(() => {
     if (isToolbarVisible && !isProjectionMode) return;
     setShowFogPanel(false);
+    setIsWeatherMenuOpen(false);
   }, [isProjectionMode, isToolbarVisible]);
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!weatherMenuRef.current) return;
+      if (weatherMenuRef.current.contains(event.target as Node)) return;
+      setIsWeatherMenuOpen(false);
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+    return () => window.removeEventListener('pointerdown', handlePointerDown);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -792,7 +806,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({ map, onClose }) => {
       )}
 
       <div
-        className={`absolute top-6 left-1/2 -translate-x-1/2 z-40 w-[min(95vw,980px)] px-2 py-1.5 bg-stone-900/40 backdrop-blur-xl border border-stone-800/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-wrap items-center justify-center gap-1.5 transition-all duration-500 hover:bg-stone-900/60 hover:border-emerald-500/30
+        className={`absolute top-3 sm:top-6 left-1/2 -translate-x-1/2 z-40 w-[min(96vw,980px)] px-2 py-1.5 bg-stone-900/40 backdrop-blur-xl border border-stone-800/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-wrap items-center justify-center gap-1.5 max-h-[48vh] overflow-y-auto sm:max-h-none sm:overflow-visible transition-all duration-500 hover:bg-stone-900/60 hover:border-emerald-500/30
           ${isToolbarVisible && !isProjectionMode ? 'translate-y-0 opacity-100' : '-translate-y-32 opacity-0 pointer-events-none'}
         `}
       >
@@ -812,7 +826,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({ map, onClose }) => {
 
         <div className="flex items-center gap-1 bg-stone-950/40 p-1 rounded-xl border border-white/5">
           <Button size="sm" variant="ghost" onClick={() => setScale((s) => clamp(s + 0.1, MIN_SCALE, MAX_SCALE))} icon={<ZoomIn className="w-4 h-4" />} className="rounded-lg" />
-          <div className="w-12 text-center text-[10px] font-mono font-bold text-emerald-500/80 bg-stone-950/60 py-1 rounded-md border border-white/5">
+          <div className="hidden sm:block w-12 text-center text-[10px] font-mono font-bold text-emerald-500/80 bg-stone-950/60 py-1 rounded-md border border-white/5">
             {Math.round(scale * 100)}%
           </div>
           <Button size="sm" variant="ghost" onClick={() => setScale((s) => clamp(s - 0.1, MIN_SCALE, MAX_SCALE))} icon={<ZoomOut className="w-4 h-4" />} className="rounded-lg" />
@@ -821,19 +835,23 @@ export const MapViewer: React.FC<MapViewerProps> = ({ map, onClose }) => {
         </div>
 
         <div className="flex items-center gap-1 bg-stone-950/40 p-1 rounded-xl border border-white/5">
-          <div className="relative group/weather">
+          <div ref={weatherMenuRef} className="relative group/weather">
             <Button
               size="sm"
               variant={weather !== 'none' ? 'primary' : 'ghost'}
               className="rounded-lg"
               icon={<CloudRain className="w-4 h-4" />}
               title={`Weather: ${weather}`}
+              onClick={() => setIsWeatherMenuOpen((prev) => !prev)}
             />
-            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-32 bg-stone-900/90 backdrop-blur-2xl border border-stone-800 rounded-xl shadow-2xl opacity-0 invisible group-hover/weather:opacity-100 group-hover/weather:visible transition-all duration-300 translate-y-2 group-hover/weather:translate-y-0 p-1.5 z-50">
+            <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 w-32 bg-stone-900/90 backdrop-blur-2xl border border-stone-800 rounded-xl shadow-2xl transition-all duration-300 p-1.5 z-50 ${isWeatherMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible translate-y-2 group-hover/weather:opacity-100 group-hover/weather:visible group-hover/weather:translate-y-0'}`}>
               {(['none', 'rain', 'storm', 'snow', 'mist', 'ash'] as WeatherType[]).map((w) => (
                 <button
                   key={w}
-                  onClick={() => setWeather(w)}
+                  onClick={() => {
+                    setWeather(w);
+                    setIsWeatherMenuOpen(false);
+                  }}
                   className={`flex items-center w-full text-left px-3 py-2 text-[10px] rounded-lg mt-0.5 first:mt-0 uppercase tracking-widest transition-colors ${weather === w
                     ? 'bg-emerald-900/40 text-emerald-400 font-bold border border-emerald-500/20'
                     : 'text-stone-400 hover:bg-stone-800 hover:text-stone-100'
@@ -909,7 +927,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({ map, onClose }) => {
         </div>
 
         {(isErasingFoW || showFogPanel || historyCounts.undo > 0 || historyCounts.redo > 0) && (
-          <div className="flex items-center gap-1 bg-stone-950/40 p-1 rounded-xl border border-white/5">
+          <div className="hidden sm:flex items-center gap-1 bg-stone-950/40 p-1 rounded-xl border border-white/5">
             <Button
               size="sm"
               variant="ghost"
@@ -948,7 +966,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({ map, onClose }) => {
         )}
 
         {(showTorches || selectedTorchId) && (
-          <div className="flex items-center gap-1 bg-stone-950/40 p-1 rounded-xl border border-white/5">
+          <div className="hidden sm:flex items-center gap-1 bg-stone-950/40 p-1 rounded-xl border border-white/5">
             <Button
               size="sm"
               variant="ghost"
@@ -1101,9 +1119,47 @@ export const MapViewer: React.FC<MapViewerProps> = ({ map, onClose }) => {
         )}
 
         {!isProjectionMode && isToolbarVisible && showFogPanel && (
-          <div className="absolute bottom-20 right-5 z-20 rounded-lg border border-stone-800/60 bg-stone-950/75 px-3 py-3 text-[10px] font-mono uppercase tracking-wide text-stone-400 backdrop-blur-sm w-[220px]">
+          <div className="absolute bottom-16 sm:bottom-20 right-3 sm:right-5 z-20 rounded-lg border border-stone-800/60 bg-stone-950/75 px-3 py-3 text-[10px] font-mono uppercase tracking-wide text-stone-400 backdrop-blur-sm w-[min(88vw,220px)] max-h-[45vh] overflow-y-auto">
             <div className="mb-2 text-stone-300">Fog Controls</div>
             <div className="space-y-2">
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={undoFog}
+                  icon={<Undo2 className="w-4 h-4 text-stone-500" />}
+                  className="rounded-lg flex-1"
+                  title="Undo"
+                  disabled={historyCounts.undo === 0}
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={redoFog}
+                  icon={<Redo2 className="w-4 h-4 text-stone-500" />}
+                  className="rounded-lg flex-1"
+                  title="Redo"
+                  disabled={historyCounts.redo === 0}
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={restoreFoW}
+                  icon={<RefreshCw className="w-4 h-4 text-stone-500 hover:text-red-500" />}
+                  className="rounded-lg flex-1"
+                  title="Reset Fog"
+                />
+              </div>
+              <Button
+                size="sm"
+                variant={showFoW ? 'primary' : 'ghost'}
+                onClick={() => setShowFoW((prev) => !prev)}
+                icon={showFoW ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4 text-stone-500" />}
+                className="rounded-lg w-full"
+                title={showFoW ? 'Hide Fog' : 'Show Fog'}
+              >
+                {showFoW ? 'Hide Fog' : 'Show Fog'}
+              </Button>
               <div className="flex items-center gap-1">
                 <Button
                   size="sm"
@@ -1160,7 +1216,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({ map, onClose }) => {
         )}
 
         {!isProjectionMode && isToolbarVisible && showTorches && !showFogPanel && (
-          <div className="absolute bottom-20 right-5 z-20 rounded-lg border border-stone-800/60 bg-stone-950/75 px-3 py-3 text-[10px] font-mono uppercase tracking-wide text-stone-400 backdrop-blur-sm w-[220px]">
+          <div className="absolute bottom-16 sm:bottom-20 right-3 sm:right-5 z-20 rounded-lg border border-stone-800/60 bg-stone-950/75 px-3 py-3 text-[10px] font-mono uppercase tracking-wide text-stone-400 backdrop-blur-sm w-[min(88vw,220px)] max-h-[45vh] overflow-y-auto">
             <div className="mb-2 text-stone-300">Torch Controls</div>
             {torches.length === 0 && (
               <div className="mb-2 text-stone-500 normal-case tracking-normal">
@@ -1227,7 +1283,7 @@ export const MapViewer: React.FC<MapViewerProps> = ({ map, onClose }) => {
         )}
 
         {!isProjectionMode && isToolbarVisible && (
-          <div className="absolute bottom-5 left-5 z-20 rounded-lg border border-stone-800/60 bg-stone-950/70 px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-stone-500 backdrop-blur-sm">
+          <div className="hidden sm:block absolute bottom-5 left-5 z-20 rounded-lg border border-stone-800/60 bg-stone-950/70 px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-stone-500 backdrop-blur-sm">
             H UI | F Full | P Project | E Fog | B Brush/Box | T Torches | L Torch Edit | Del Remove | Cmd/Ctrl+Z Undo
           </div>
         )}

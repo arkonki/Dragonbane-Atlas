@@ -13,11 +13,11 @@ interface MapListProps {
 export const MapList: React.FC<MapListProps> = ({ maps, onSelect, onDelete, onToggleFavorite }) => {
   if (maps.length === 0) {
     return (
-      <div className="text-center py-24 border-2 border-dashed border-stone-800 rounded-xl bg-stone-900/30 backdrop-blur-sm relative overflow-hidden group">
+      <div className="text-center py-14 sm:py-24 border-2 border-dashed border-stone-800 rounded-xl bg-stone-900/30 backdrop-blur-sm relative overflow-hidden group">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity"></div>
-        <MapIcon className="w-20 h-20 text-stone-800 mx-auto mb-6 group-hover:text-emerald-900/50 transition-colors duration-500" />
-        <h3 className="text-2xl font-display text-stone-500 mb-2">The Archives are Empty</h3>
-        <p className="text-stone-600 font-serif italic text-lg">"No explorer has yet returned with news of the world."</p>
+        <MapIcon className="w-14 h-14 sm:w-20 sm:h-20 text-stone-800 mx-auto mb-4 sm:mb-6 group-hover:text-emerald-900/50 transition-colors duration-500" />
+        <h3 className="text-xl sm:text-2xl font-display text-stone-500 mb-2">The Archives are Empty</h3>
+        <p className="text-stone-600 font-serif italic text-base sm:text-lg">"No explorer has yet returned with news of the world."</p>
       </div>
     );
   }
@@ -30,7 +30,7 @@ export const MapList: React.FC<MapListProps> = ({ maps, onSelect, onDelete, onTo
   });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
       {sortedMaps.map((map) => (
         <div
           key={map.id}
@@ -56,8 +56,8 @@ export const MapList: React.FC<MapListProps> = ({ maps, onSelect, onDelete, onTo
             </button>
 
             {/* Metadata Badges */}
-            <div className="absolute top-3 right-3 z-20 flex gap-2">
-              <div className="px-2 py-1 rounded bg-black/50 backdrop-blur-md border border-white/5 text-[10px] font-mono text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
+            <div className="absolute top-3 right-3 z-20 hidden sm:flex gap-2">
+              <div className="px-2 py-1 rounded bg-black/50 backdrop-blur-md border border-white/5 text-[10px] font-mono text-stone-400 opacity-0 sm:group-hover:opacity-100 transition-opacity translate-y-2 sm:group-hover:translate-y-0 duration-300">
                 ID: {map.id.substring(0, 5)}
               </div>
             </div>
@@ -66,7 +66,7 @@ export const MapList: React.FC<MapListProps> = ({ maps, onSelect, onDelete, onTo
             <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent opacity-90 group-hover:opacity-40 transition-opacity duration-500" />
 
             {/* Actions overlay on hover */}
-            <div className="absolute inset-0 bg-stone-950/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-4 backdrop-blur-[2px]">
+            <div className="absolute inset-0 bg-stone-950/60 opacity-0 sm:group-hover:opacity-100 transition-all duration-300 hidden sm:flex items-center justify-center gap-4 backdrop-blur-[2px]">
               <Button
                 size="md"
                 variant="primary"
@@ -88,9 +88,31 @@ export const MapList: React.FC<MapListProps> = ({ maps, onSelect, onDelete, onTo
             </div>
           </div>
 
-          <div className="p-5 flex-1 flex flex-col">
+          <div className="sm:hidden px-3 py-3 flex items-center gap-2 border-b border-stone-800/50 bg-stone-950/50">
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => onSelect(map)}
+              icon={<Eye className="w-4 h-4" />}
+              className="flex-1"
+            >
+              View
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(map.id);
+              }}
+              icon={<Trash2 className="w-4 h-4 text-red-800" />}
+              className="hover:!bg-red-950/20"
+            />
+          </div>
+
+          <div className="p-4 sm:p-5 flex-1 flex flex-col">
             <div className="flex justify-between items-start mb-3 gap-3">
-              <h4 className="font-display font-black text-stone-100 text-lg uppercase tracking-wide leading-tight group-hover:text-emerald-400 transition-colors" title={map.name}>
+              <h4 className="font-display font-black text-stone-100 text-base sm:text-lg uppercase tracking-wide leading-tight group-hover:text-emerald-400 transition-colors" title={map.name}>
                 {map.name}
               </h4>
               {map.isFavorite && (
